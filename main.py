@@ -156,7 +156,7 @@ class Game:
             x = self.player.x + random.uniform(-200, 200)
             y = self.player.y + random.uniform(-200, 200)
             enemy_type = random.choice(["grunt", "archer", "tank"])
-            enemy = create_enemy(x, y, enemy_type)
+            enemy = create_enemy(x, y, enemy_type, self)
             self.world.add_entity(enemy)
         
         # Spawn some items
@@ -164,7 +164,7 @@ class Game:
             x = self.player.x + random.uniform(-150, 150)
             y = self.player.y + random.uniform(-150, 150)
             item_type = random.choice(["coin", "health_potion"])
-            item = create_item(x, y, item_type)
+            item = create_item(item_type, x, y, self)
             self.world.add_entity(item)
             
     def pause(self):
