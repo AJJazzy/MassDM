@@ -15,12 +15,14 @@ class CombatSystem:
     combo system, status effects, and special attacks.
     """
     
-    def __init__(self, game):
+    def __init__(self, world, player):
         """
         Initialize the combat system.
-        game: Reference to the main game instance
+        world: Reference to the world instance
+        player: Reference to the player instance
         """
-        self.game = game
+        self.world = world
+        self.player = player
         
         # Combat settings
         self.critical_hit_chance = 0.20
@@ -59,9 +61,8 @@ class CombatSystem:
         attack_hitbox = pygame.Rect(attack_x, attack_y, attack_width, attack_height)
         
         # Check for hits
-        if hasattr(self.game, 'world'):
-            for enemy in self.game.world.enemies[:]:
-                self._check_attack_hit(player, enemy, attack_hitbox, damage, 'light')
+        for enemy in self.world.enemies[:]:
+            self._check_attack_hit(player, enemy, attack_hitbox, damage, 'light')
     
     def player_heavy_attack(self, player, attack_x, attack_y, attack_width, attack_height, damage):
         """
@@ -75,9 +76,8 @@ class CombatSystem:
         attack_hitbox = pygame.Rect(attack_x, attack_y, attack_width, attack_height)
         
         # Check for hits
-        if hasattr(self.game, 'world'):
-            for enemy in self.game.world.enemies[:]:
-                self._check_attack_hit(player, enemy, attack_hitbox, damage, 'heavy')
+        for enemy in self.world.enemies[:]:
+            self._check_attack_hit(player, enemy, attack_hitbox, damage, 'heavy')
     
     def player_whirlwind_attack(self, player, center_x, center_y, radius, damage):
         """
@@ -87,8 +87,7 @@ class CombatSystem:
         radius: Attack radius
         damage: Base damage
         """
-        if hasattr(self.game, 'world'):
-            for enemy in self.game.world.enemies[:]:
+        for enemy in self.world.enemies[:]:
                 enemy_center = enemy.get_center()
                 distance = distance(center_x, center_y, enemy_center[0], enemy_center[1])
                 
@@ -109,14 +108,11 @@ class CombatSystem:
         direction: Direction of dash (1 for right, -1 for left)
         dash_distance: Distance to teleport
         """
-        if not hasattr(self.game, 'world'):
-            return
-        
         # Calculate end position
         end_x = start_x + direction * dash_distance
         
         # Check for enemies along the path
-        for enemy in self.game.world.enemies[:]:
+        for enemy in self.world.enemies[:]:
             enemy_center = enemy.get_center()
             
             # Check if enemy is between start and end
@@ -147,19 +143,18 @@ class CombatSystem:
         attack_hitbox = pygame.Rect(attack_x, attack_y, attack_width, attack_height)
         
         # Check for hit on player
-        if hasattr(self.game, 'player'):
-            player = self.game.player
-            if hasattr(player, 'get_hitbox'):
-                player_hitbox = player.get_hitbox()
-                if attack_hitbox.colliderect(player_hitbox):
-                    # Calculate direction
-                    enemy_center = enemy.get_center()
-                    player_center = player.get_center()
-                    dx = player_center[0] - enemy_center[0]
-                    direction = 1 if dx > 0 else -1
-                    
-                    # Apply damage to player
-                    self._apply_damage_to_player(player, damage, direction, enemy)
+        player = self.player
+        if hasattr(player, 'get_hitbox'):
+            player_hitbox = player.get_hitbox()
+            if attack_hitbox.colliderect(player_hitbox):
+                # Calculate direction
+                enemy_center = enemy.get_center()
+                player_center = player.get_center()
+                dx = player_center[0] - enemy_center[0]
+                direction = 1 if dx > 0 else -1
+                
+                # Apply damage to player
+                self._apply_damage_to_player(player, damage, direction, enemy)
     
     def create_fireball(self, x, y, direction, owner):
         """
@@ -168,10 +163,9 @@ class CombatSystem:
         direction: Direction (1 for right, -1 for left)
         owner: Entity that fired the fireball
         """
-        if hasattr(self.game, 'world'):
-            vx = direction * FIREBALL_SPEED
-            vy = 0
-            self.game.world.add_projectile('fireball', x, y, vx, vy, owner)
+        vx = direction * FIREBALL_SPEED
+        vy = 0
+        self.world.add_projectile('fireball', x, y, vx, vy, owner)
     
     def create_ice_projectile(self, x, y, direction, owner):
         """
@@ -180,11 +174,10 @@ class CombatSystem:
         direction: Direction (1 for right, -1 for left)
         owner: Entity that fired the projectile
         """
-        if hasattr(self.game, 'world'):
-            vx = direction * FIREBALL_SPEED * 0.8
-            vy = 0
-            # Create a custom ice projectile (would need to add to projectile types)
-            self.game.world.add_projectile('fireball', x, y, vx, vy, owner)
+        vx = direction * FIREBALL_SPEED * 0.8
+        vy = 0
+        # Create a custom ice projectile (would need to add to projectile types)
+        self.world.add_projectile('fireball', x, y, vx, vy, owner)
             # Note: In full implementation, would have a separate ice projectile type
     
     def create_shockwave(self, x, y, radius, damage, owner):
@@ -195,11 +188,10 @@ class CombatSystem:
         damage: Damage to deal
         owner: Entity that created the shockwave
         """
-        if hasattr(self.game, 'world'):
-            # Shockwave is handled specially - it's not a regular projectile
-            # For now, we'll create a shockwave projectile
-            self.game.world.add_projectile('shockwave', x - radius, y - radius, 0, 0, owner)
-            # The shockwave projectile will handle its own expansion and damage
+        # Shockwave is handled specially - it's not a regular projectile
+        # For now, we'll create a shockwave projectile
+        self.world.add_projectile('shockwave', x - radius, y - radius, 0, 0, owner)
+        # The shockwave projectile will handle its own expansion and damage
     
     def create_explosion(self, x, y, radius, damage, owner):
         """
@@ -209,42 +201,39 @@ class CombatSystem:
         damage: Damage to deal
         owner: Entity that caused the explosion
         """
-        if hasattr(self.game, 'world'):
-            # Apply damage to all entities in radius
-            for enemy in self.game.world.enemies[:]:
-                enemy_center = enemy.get_center()
-                distance = distance(x, y, enemy_center[0], enemy_center[1])
-                
-                if distance <= radius:
-                    # Calculate damage based on distance (falloff)
-                    damage_ratio = 1.0 - (distance / radius)
-                    actual_damage = int(damage * damage_ratio)
-                    
-                    # Calculate direction
-                    dx = enemy_center[0] - x
-                    direction = 1 if dx > 0 else -1
-                    
-                    # Apply damage
-                    enemy.take_damage(actual_damage, direction, 50, 'burn')
+        # Apply damage to all entities in radius
+        for enemy in self.world.enemies[:]:
+            enemy_center = enemy.get_center()
+            distance = distance(x, y, enemy_center[0], enemy_center[1])
             
-            # Apply damage to player if in radius
-            if hasattr(self.game, 'player'):
-                player = self.game.player
-                player_center = player.get_center()
-                distance = distance(x, y, player_center[0], player_center[1])
+            if distance <= radius:
+                # Calculate damage based on distance (falloff)
+                damage_ratio = 1.0 - (distance / radius)
+                actual_damage = int(damage * damage_ratio)
                 
-                if distance <= radius:
-                    damage_ratio = 1.0 - (distance / radius)
-                    actual_damage = int(damage * damage_ratio)
-                    
-                    dx = player_center[0] - x
-                    direction = 1 if dx > 0 else -1
-                    
-                    player.take_damage(actual_damage, direction, 50, 'burn')
+                # Calculate direction
+                dx = enemy_center[0] - x
+                direction = 1 if dx > 0 else -1
+                
+                # Apply damage
+                enemy.take_damage(actual_damage, direction, 50, 'burn')
+        
+        # Apply damage to player if in radius
+        player = self.player
+        player_center = player.get_center()
+        distance = distance(x, y, player_center[0], player_center[1])
+        
+        if distance <= radius:
+            damage_ratio = 1.0 - (distance / radius)
+            actual_damage = int(damage * damage_ratio)
             
-            # Create explosion particles
-            if hasattr(self.game, 'particle_system'):
-                self.game.particle_system.create_explosion_particles(x, y, radius)
+            dx = player_center[0] - x
+            direction = 1 if dx > 0 else -1
+            
+            player.take_damage(actual_damage, direction, 50, 'burn')
+        
+        # Create explosion particles
+        # Note: particle_system is accessed through world if available
     
     def _check_attack_hit(self, attacker, target, attack_hitbox, base_damage, attack_type):
         """

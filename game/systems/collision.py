@@ -14,12 +14,12 @@ class CollisionSystem:
     Uses spatial partitioning for efficient collision checks.
     """
     
-    def __init__(self, game):
+    def __init__(self, world):
         """
         Initialize the collision system.
-        game: Reference to the main game instance
+        world: Reference to the world instance
         """
-        self.game = game
+        self.world = world
         
         # Spatial grid for broad phase collision
         self.grid_cell_size = 64  # Size of each grid cell in pixels
@@ -50,21 +50,19 @@ class CollisionSystem:
     def _rebuild_grid(self):
         """Rebuild the spatial grid with all collidable entities."""
         # Add all enemies
-        if hasattr(self.game, 'world'):
-            for enemy in self.game.world.enemies:
-                self._add_to_grid(enemy)
-            
-            # Add all items
-            for item in self.game.world.items:
-                self._add_to_grid(item)
-            
-            # Add all projectiles
-            for projectile in self.game.world.projectiles:
-                self._add_to_grid(projectile)
+        for enemy in self.world.enemies:
+            self._add_to_grid(enemy)
+        
+        # Add all items
+        for item in self.world.items:
+            self._add_to_grid(item)
+        
+        # Add all projectiles
+        for projectile in self.world.projectiles:
+            self._add_to_grid(projectile)
         
         # Add player
-        if hasattr(self.game, 'player'):
-            self._add_to_grid(self.game.player)
+        self._add_to_grid(self.world.player)
     
     def _add_to_grid(self, entity):
         """Add an entity to the spatial grid."""
@@ -150,35 +148,35 @@ class CollisionSystem:
         collisions = []
         
         # Check against all enemies
-        if hasattr(self.game, 'world'):
-            for other_entity in self.game.world.enemies:
-                if other_entity is entity:
-                    continue
-                if hasattr(other_entity, 'get_hitbox'):
-                    if entity_hitbox.colliderect(other_entity.get_hitbox()):
-                        collisions.append(other_entity)
-            
-            # Check against items
-            for other_entity in self.game.world.items:
-                if other_entity is entity:
-                    continue
-                if hasattr(other_entity, 'get_hitbox'):
-                    if entity_hitbox.colliderect(other_entity.get_hitbox()):
-                        collisions.append(other_entity)
-            
-            # Check against projectiles
-            for other_entity in self.game.world.projectiles:
-                if other_entity is entity:
-                    continue
-                if hasattr(other_entity, 'get_hitbox'):
-                    if entity_hitbox.colliderect(other_entity.get_hitbox()):
-                        collisions.append(other_entity)
+        # Check against enemies
+        for other_entity in self.world.enemies:
+            if other_entity is entity:
+                continue
+            if hasattr(other_entity, 'get_hitbox'):
+                if entity_hitbox.colliderect(other_entity.get_hitbox()):
+                    collisions.append(other_entity)
+        
+        # Check against items
+        for other_entity in self.world.items:
+            if other_entity is entity:
+                continue
+            if hasattr(other_entity, 'get_hitbox'):
+                if entity_hitbox.colliderect(other_entity.get_hitbox()):
+                    collisions.append(other_entity)
+        
+        # Check against projectiles
+        for other_entity in self.world.projectiles:
+            if other_entity is entity:
+                continue
+            if hasattr(other_entity, 'get_hitbox'):
+                if entity_hitbox.colliderect(other_entity.get_hitbox()):
+                    collisions.append(other_entity)
         
         # Check against player
-        if hasattr(self.game, 'player') and self.game.player is not entity:
-            if hasattr(self.game.player, 'get_hitbox'):
-                if entity_hitbox.colliderect(self.game.player.get_hitbox()):
-                    collisions.append(self.game.player)
+        if self.world.player is not entity:
+            if hasattr(self.world.player, 'get_hitbox'):
+                if entity_hitbox.colliderect(self.world.player.get_hitbox()):
+                    collisions.append(self.world.player)
         
         return collisions
     
@@ -200,23 +198,22 @@ class CollisionSystem:
         new_hitbox = pygame.Rect(new_x, new_y, hitbox.width, hitbox.height)
         
         # Check against world terrain
-        if hasattr(self.game, 'world'):
-            # Get chunks that this hitbox overlaps
-            min_chunk_x = int(new_x / (CHUNK_SIZE * TILE_SIZE))
-            min_chunk_y = int(new_y / (CHUNK_SIZE * TILE_SIZE))
-            max_chunk_x = int((new_x + hitbox.width) / (CHUNK_SIZE * TILE_SIZE))
-            max_chunk_y = int((new_y + hitbox.height) / (CHUNK_SIZE * TILE_SIZE))
-            
-            for chunk_x in range(min_chunk_x, max_chunk_x + 1):
-                for chunk_y in range(min_chunk_y, max_chunk_y + 1):
-                    chunk = self.game.world.get_chunk_at(
-                        chunk_x * CHUNK_SIZE * TILE_SIZE,
-                        chunk_y * CHUNK_SIZE * TILE_SIZE
-                    )
-                    if chunk:
-                        # Check collision with chunk features
-                        if self._check_chunk_collision(chunk, new_hitbox):
-                            return True
+        # Get chunks that this hitbox overlaps
+        min_chunk_x = int(new_x / (CHUNK_SIZE * TILE_SIZE))
+        min_chunk_y = int(new_y / (CHUNK_SIZE * TILE_SIZE))
+        max_chunk_x = int((new_x + hitbox.width) / (CHUNK_SIZE * TILE_SIZE))
+        max_chunk_y = int((new_y + hitbox.height) / (CHUNK_SIZE * TILE_SIZE))
+        
+        for chunk_x in range(min_chunk_x, max_chunk_x + 1):
+            for chunk_y in range(min_chunk_y, max_chunk_y + 1):
+                chunk = self.world.get_chunk_at(
+                    chunk_x * CHUNK_SIZE * TILE_SIZE,
+                    chunk_y * CHUNK_SIZE * TILE_SIZE
+                )
+                if chunk:
+                    # Check collision with chunk features
+                    if self._check_chunk_collision(chunk, new_hitbox):
+                        return True
         
         # Check world bounds
         if new_x < 0 or new_x + hitbox.width > WORLD_WIDTH_PIXELS:

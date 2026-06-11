@@ -91,7 +91,7 @@ class Game:
         # Create player
         self.player = Player(
             WORLD_CENTER_X, WORLD_CENTER_Y,
-            PLAYER_SIZE, PLAYER_SIZE
+            self
         )
         self.world.add_entity(self.player)
         
@@ -103,11 +103,11 @@ class Game:
         self.rendering_system = RenderingSystem(self.world, self.camera)
         self.collision_system = CollisionSystem(self.world)
         self.combat_system = CombatSystem(self.world, self.player)
-        self.particle_system = ParticleSystem()
+        self.particle_system = ParticleSystem(self)
         self.networking_system = NetworkingSystem(self)
         
         # Create HUD
-        self.hud = HUD(self.player)
+        self.hud = HUD(self)
         
         # Create minimap
         self.minimap = Minimap(

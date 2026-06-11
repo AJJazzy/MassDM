@@ -14,12 +14,14 @@ class RenderingSystem:
     Supports batching, culling, and level-of-detail rendering.
     """
     
-    def __init__(self, game):
+    def __init__(self, world, camera):
         """
         Initialize the rendering system.
-        game: Reference to the main game instance
+        world: Reference to the world instance
+        camera: Reference to the camera instance
         """
-        self.game = game
+        self.world = world
+        self.camera = camera
         
         # Display
         self.screen = None
@@ -62,33 +64,20 @@ class RenderingSystem:
         self.clear()
         
         # Render world
-        if hasattr(self.game, 'world'):
-            self.render_world()
+        self.world.render(self.screen)
         
-        # Render player
-        if hasattr(self.game, 'player'):
-            self.render_player()
+        # Render player (handled by world)
         
-        # Render HUD
-        if hasattr(self.game, 'hud'):
-            self.game.hud.render(self.screen)
+        # Note: HUD and menus are rendered separately by the main game
         
-        # Render menus if active
-        if hasattr(self.game, 'menu') and self.game.menu.active:
-            self.game.menu.render(self.screen)
-        
-        # Update display
-        pygame.display.flip()
-    
     def render_world(self):
         """Render the game world."""
-        if hasattr(self.game, 'world'):
-            self.game.world.render(self.screen)
+        self.world.render(self.screen)
     
     def render_player(self):
         """Render the player."""
-        if hasattr(self.game, 'player') and hasattr(self.game, 'world'):
-            self.game.player.render(self.screen, self.game.world.camera)
+        # Player is rendered by the world
+        pass
     
     def render_entity(self, entity, camera):
         """

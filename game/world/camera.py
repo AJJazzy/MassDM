@@ -15,16 +15,25 @@ class Camera:
     Supports zoom, shake effects, and clamping to world bounds.
     """
     
-    def __init__(self, game):
+    def __init__(self, target, screen_width, screen_height):
         """
         Initialize the camera.
-        game: Reference to the main game instance
+        target: Entity to follow (usually the player)
+        screen_width: Width of the screen
+        screen_height: Height of the screen
         """
         # Position
         self.x = 0
         self.y = 0
         self.target_x = 0
         self.target_y = 0
+        
+        # Screen dimensions
+        self.screen_width = screen_width
+        self.screen_height = screen_height
+        
+        # Target to follow
+        self.target = target
         
         # Smoothing
         self.lerp_factor = CAMERA_LERP_FACTOR
@@ -67,6 +76,11 @@ class Camera:
         
         # Update shake
         self._update_shake(dt)
+        
+        # Update target position from followed entity
+        if self.target:
+            self.target_x = self.target.x + self.target.width // 2
+            self.target_y = self.target.y + self.target.height // 2
         
         # Smoothly interpolate position toward target
         self.x = lerp(self.x, self.target_x, self.lerp_factor * 60 * dt)
@@ -203,6 +217,7 @@ class Camera:
     
     def lock_to_player(self, player):
         """Lock camera to follow a player."""
+        self.target = player
         if player:
             self.target_x = player.x + player.width // 2
             self.target_y = player.y + player.height // 2
