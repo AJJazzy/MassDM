@@ -362,4 +362,4 @@ ITEM_CLASS_MAP = {
 def create_item(item_type, x, y, game, amount=1):
     """Factory function to create an item of the specified type."""
     item_class = ITEM_CLASS_MAP.get(item_type, Item)
-    return item_class(x, y, game, amount)
+    return item_class(item_type, x, y, game, amount)
