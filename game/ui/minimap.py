@@ -94,8 +94,9 @@ class Minimap:
         )
         
         # Direction indicator (facing direction)
-        if hasattr(self.world.player, 'facing'):
-            angle = self.world.player.facing
+        if hasattr(self.world.player, 'facing_right'):
+            # Convert facing_right to angle (0 for right, PI for left)
+            angle = 0 if self.world.player.facing_right else math.pi
             dir_length = head_radius * 2
             end_x = player_x + dir_length * math.cos(angle)
             end_y = player_y + dir_length * math.sin(angle)
