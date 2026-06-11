@@ -471,8 +471,8 @@ PROJECTILE_CLASS_MAP = {
 def create_projectile(projectile_type, x, y, vx, vy, owner, game):
     """Factory function to create a projectile of the specified type."""
     if projectile_type == 'shockwave':
-        # Shockwave needs radius parameter
+        # Shockwave needs radius parameter - use vx as radius, vy as damage
         return Shockwave(x, y, vx, vy, owner, game)
     
     projectile_class = PROJECTILE_CLASS_MAP.get(projectile_type, Projectile)
-    return projectile_class(x, y, vx, vy, owner, game)
+    return projectile_class(projectile_type, x, y, vx, vy, owner, game)
