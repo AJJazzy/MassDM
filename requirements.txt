@@ -1,0 +1,4 @@
+# STICK REALM: SHADOW OPEN WORLD
+# Python dependencies
+
+pygame>=2.0.0
