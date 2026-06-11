@@ -26,6 +26,7 @@ class Player:
         self.width = PLAYER_HITBOX_WIDTH
         self.height = PLAYER_HITBOX_HEIGHT
         self.size = PLAYER_SIZE
+        self.type = 'player'
         
         # Movement state
         self.vx = 0

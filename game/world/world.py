@@ -64,11 +64,27 @@ class World:
         self.weather_timer = 0
         self.weather_duration = 300  # 5 minutes per weather
         
+        # Player reference (set when player is added)
+        self.player = None
+    
+    def add_entity(self, entity):
+        """Add an entity to the world."""
+        if hasattr(entity, 'type'):
+            if entity.type == 'player':
+                self.player = entity
+                self.players.append(entity)
+            elif entity.type in ['grunt', 'archer', 'tank', 'assassin', 'mage', 'boss']:
+                self.enemies.append(entity)
+            elif entity.type in ['coin', 'health_potion', 'weapon_upgrade', 'armour_upgrade']:
+                self.items.append(entity)
+            elif entity.type in ['arrow', 'fireball', 'shockwave']:
+                self.projectiles.append(entity)
+        
         # Initialize biome map
         self._init_biome_map()
         
-        # Initialize camera
-        self.camera = Camera(self)
+        # Camera (will be set by main game)
+        self.camera = None
         
         # World state
         self.paused = False
@@ -200,8 +216,8 @@ class World:
         """Update all entities in the world."""
         # Update enemies
         for enemy in self.enemies[:]:
-            if hasattr(self.game, 'player'):
-                if not enemy.update(dt, self.game.player):
+            if self.player:
+                if not enemy.update(dt, self.player):
                     # Enemy returned False - remove it
                     self.enemies.remove(enemy)
         
@@ -231,7 +247,7 @@ class World:
             return
         
         # Get player position
-        player = self.game.player
+        player = self.player
         player_x, player_y = player.get_center()
         
         # Get visible area
