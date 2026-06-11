@@ -50,6 +50,8 @@ class World:
         # Dungeons
         self.dungeons = []
         self.active_dungeon = None
+        self.dungeon_entrances = []
+        self.boss_positions = []
         
         # Spawning
         self.spawn_timer = 0
