@@ -537,6 +537,11 @@ MUSIC_VOLUME = 0.7
 SFX_VOLUME = 0.8
 UI_VOLUME = 0.8
 
+# Default settings
+DEFAULT_MUSIC_VOLUME = MUSIC_VOLUME
+DEFAULT_SFX_VOLUME = SFX_VOLUME
+DEFAULT_BRIGHTNESS = 1.0
+
 # ==================== CONTROLS ====================
 
 # Default key bindings
