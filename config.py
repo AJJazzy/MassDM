@@ -372,6 +372,56 @@ DUNGEONS = {
 # Room types
 ROOM_TYPES = ['normal', 'trap', 'puzzle', 'treasure', 'boss']
 
+
+# ==================== DUNGEON BRAWLER SETTINGS ====================
+
+# Physics
+DUNGEON_GRAVITY = 1.2
+DUNGEON_AIR_RESISTANCE = 0.02
+DUNGEON_FRICTION = 0.15
+DUNGEON_BOUNCE_FACTOR = 0.3
+DUNGEON_MAX_VELOCITY = 20
+
+# Player
+DUNGEON_PLAYER_WIDTH = 30
+DUNGEON_PLAYER_HEIGHT = 60
+DUNGEON_PLAYER_HEALTH = 100
+DUNGEON_PLAYER_SPEED = 5
+DUNGEON_PLAYER_DAMAGE = 15
+DUNGEON_PLAYER_ATTACK_RANGE = 40
+
+# Movement
+DUNGEON_JUMP_POWER = 12
+DUNGEON_JUMP_BUFFER = 0.1  # seconds
+DUNGEON_COYOTE_TIME = 0.1  # seconds
+
+# Combat
+DUNGEON_ATTACK_DURATION = 0.2  # seconds
+DUNGEON_ATTACK_COOLDOWN = 0.3  # seconds
+DUNGEON_COMBO_WINDOW = 1.0  # seconds
+
+# Enemy
+DUNGEON_ENEMY_WIDTH = 25
+DUNGEON_ENEMY_HEIGHT = 50
+
+DUNGEON_ENEMY_TYPES = {
+    'grunt': {'health': 50, 'damage': 10, 'speed': 2, 'attack_range': 30},
+    'archer': {'health': 30, 'damage': 15, 'speed': 3, 'attack_range': 60},
+    'tank': {'health': 100, 'damage': 20, 'speed': 1, 'attack_range': 25},
+    'assassin': {'health': 40, 'damage': 25, 'speed': 4, 'attack_range': 20},
+    'mage': {'health': 35, 'damage': 12, 'speed': 2, 'attack_range': 50},
+    'boss': {'health': 200, 'damage': 30, 'speed': 2, 'attack_range': 40},
+}
+
+DUNGEON_ENEMY_COLORS = {
+    'grunt': GRAY_60,
+    'archer': GREEN,
+    'tank': BLUE,
+    'assassin': YELLOW,
+    'mage': GRAY_65,
+    'boss': RED,
+}
+
 # ==================== CAMERA SETTINGS ====================
 
 # Camera properties

@@ -455,6 +455,72 @@ class Dungeon:
     def is_completed(self):
         """Check if the dungeon is completed."""
         return self.completed
+    
+    def check_ground_collision(self, entity):
+        """Check if entity is on the ground (for dungeon brawler physics)."""
+        # In dungeon brawler mode, ground is at floor_y
+        # For now, use a simple floor at the bottom of the dungeon
+        # This will be enhanced with proper platform detection
+        entity_bottom = entity.y + entity.height
+        return entity_bottom >= self.floor_y
+    
+    def create_attack_effect(self, x, y, direction, combo_count):
+        """Create a visual effect for an attack."""
+        # This would create particles or visual effects
+        # For now, just a placeholder
+        pass
+    
+    @property
+    def floor_y(self):
+        """Get the floor Y position for dungeon brawler mode."""
+        # Return a reasonable floor position
+        # In a full implementation, this would be based on the dungeon layout
+        return SCREEN_HEIGHT - 100
+    
+    @property
+    def boss_x(self):
+        """Get the boss X position."""
+        if self.rooms:
+            boss_room = self.rooms[-1]  # Last room is boss room
+            return boss_room.x * TILE_SIZE + boss_room.width * TILE_SIZE // 2
+        return self.entrance_x + 200
+    
+    @property
+    def boss_y(self):
+        """Get the boss Y position."""
+        if self.rooms:
+            boss_room = self.rooms[-1]
+            return boss_room.y * TILE_SIZE + boss_room.height * TILE_SIZE // 2
+        return self.entrance_y
+    
+    @property
+    def walls(self):
+        """Get dungeon walls for collision."""
+        walls = []
+        for room in self.rooms:
+            # Add room boundaries as walls
+            room_x = room.x * TILE_SIZE
+            room_y = room.y * TILE_SIZE
+            walls.append({
+                'x': room_x,
+                'y': room_y,
+                'width': room.width * TILE_SIZE,
+                'height': room.height * TILE_SIZE
+            })
+        return walls
+    
+    @property
+    def enemies(self):
+        """Get dungeon enemies for brawler mode."""
+        enemies = []
+        for room in self.rooms:
+            for enemy_data in room.enemies:
+                enemies.append({
+                    'x': room.x * TILE_SIZE + enemy_data['x'] * TILE_SIZE,
+                    'y': room.y * TILE_SIZE + enemy_data['y'] * TILE_SIZE,
+                    'type': enemy_data['type']
+                })
+        return enemies
 
 
 # Dungeon type mapping

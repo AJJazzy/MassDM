@@ -18,6 +18,7 @@ from game.entities.items import create_item
 from game.entities.projectile import create_projectile
 from game.world.world import World
 from game.world.camera import Camera
+from game.world.dungeon_brawler import DungeonBrawlerMode
 from game.systems.rendering import RenderingSystem
 from game.systems.collision import CollisionSystem
 from game.systems.combat import CombatSystem
@@ -49,6 +50,9 @@ class Game:
         self.kills = 0
         self.coins = 0
         
+        # Game mode: 'open_world' or 'dungeon_brawler'
+        self.game_mode = "open_world"
+        
         # Settings
         self.music_volume = DEFAULT_MUSIC_VOLUME
         self.sfx_volume = DEFAULT_SFX_VOLUME
@@ -65,6 +69,19 @@ class Game:
         self.networking_system = None
         self.hud = None
         self.minimap = None
+        
+        # Dungeon brawler mode
+        self.dungeon_brawler_mode = None
+        
+        # Input state for dungeon brawler mode
+        self.input_state = {
+            'move_left': False,
+            'move_right': False,
+            'jump': False,
+            'attack': False,
+            'dash': False,
+            'block': False
+        }
         
         # Initialize menus
         self.main_menu = None
@@ -130,6 +147,9 @@ class Game:
         # Seed random
         random.seed(time.time())
         
+        # Initialize dungeon brawler mode (will be activated when entering dungeon)
+        self.dungeon_brawler_mode = None
+        
     def start_game(self):
         """Start a new game."""
         self._initialize_game()
@@ -148,6 +168,51 @@ class Game:
         self.is_multiplayer = True
         self.start_game()
         self.networking_system.start()
+    
+    def enter_dungeon_brawler(self, dungeon):
+        """Enter dungeon brawler mode."""
+        if self.game_mode == "dungeon_brawler":
+            return
+        
+        print("Entering dungeon brawler mode!")
+        self.game_mode = "dungeon_brawler"
+        
+        # Create dungeon brawler mode
+        self.dungeon_brawler_mode = DungeonBrawlerMode(self, dungeon)
+        self.dungeon_brawler_mode.enter()
+        
+        # Reset input state
+        self.input_state = {
+            'move_left': False,
+            'move_right': False,
+            'jump': False,
+            'attack': False,
+            'dash': False,
+            'block': False
+        }
+    
+    def exit_dungeon_brawler(self):
+        """Exit dungeon brawler mode and return to open world."""
+        if self.game_mode != "dungeon_brawler":
+            return
+        
+        print("Exiting dungeon brawler mode!")
+        
+        if self.dungeon_brawler_mode:
+            self.dungeon_brawler_mode.exit()
+            self.dungeon_brawler_mode = None
+        
+        self.game_mode = "open_world"
+        
+        # Reset input state
+        self.input_state = {
+            'move_left': False,
+            'move_right': False,
+            'jump': False,
+            'attack': False,
+            'dash': False,
+            'block': False
+        }
         
     def _spawn_initial_entities(self):
         """Spawn initial entities around the player."""
@@ -166,6 +231,19 @@ class Game:
             item_type = random.choice(["coin", "health_potion"])
             item = create_item(item_type, x, y, self)
             self.world.add_entity(item)
+        
+        # Create some dungeons
+        dungeon_types = ['cave_dungeon', 'ruins_dungeon']
+        for i, dungeon_type in enumerate(dungeon_types):
+            # Position dungeons around the player
+            dungeon_x = self.player.x + (i + 1) * 300 * (1 if i % 2 == 0 else -1)
+            dungeon_y = self.player.y + (i + 1) * 200 * (1 if i % 2 == 1 else -1)
+            dungeon = self.world.create_dungeon(dungeon_type, dungeon_x, dungeon_y)
+            self.world.dungeon_entrances.append({
+                'x': dungeon.entrance_x,
+                'y': dungeon.entrance_y,
+                'dungeon': dungeon
+            })
             
     def pause(self):
         """Pause the game."""
@@ -300,7 +378,11 @@ class Game:
         """Handle key down events."""
         if event.key == pygame.K_ESCAPE:
             if self.state == "playing":
-                self.pause()
+                # If in dungeon brawler mode, exit to open world
+                if self.game_mode == "dungeon_brawler":
+                    self.exit_dungeon_brawler()
+                else:
+                    self.pause()
             elif self.state == "paused":
                 self.resume()
             elif self.state == "menu":
@@ -321,52 +403,86 @@ class Game:
             # Load game
             self.load_game()
             
-        # Player movement
+        # Player movement - handle for both modes
         if self.state == "playing":
-            if event.key == pygame.K_w or event.key == pygame.K_UP:
-                self.player.moving_up = True
-            if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-                self.player.moving_down = True
-            if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                self.player.moving_left = True
-            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                self.player.moving_right = True
-            if event.key == pygame.K_SPACE:
-                self.player.jump()
-            if event.key == pygame.K_LSHIFT:
-                self.player.running = True
-            if event.key == pygame.K_LCTRL:
-                self.player.dashing = True
-                
-            # Combat
-            if event.key == pygame.K_j:
-                self.player.light_attack()
-            if event.key == pygame.K_k:
-                self.player.heavy_attack()
-            if event.key == pygame.K_l:
-                self.player.block()
-            if event.key == pygame.K_i:
-                self.player.use_ability(0)
-            if event.key == pygame.K_o:
-                self.player.use_ability(1)
-            if event.key == pygame.K_u:
-                self.player.use_ability(2)
+            # Open world movement
+            if self.game_mode == "open_world":
+                if event.key == pygame.K_w or event.key == pygame.K_UP:
+                    self.player.moving_up = True
+                if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                    self.player.moving_down = True
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    self.player.moving_left = True
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    self.player.moving_right = True
+                if event.key == pygame.K_SPACE:
+                    self.player.jump()
+                if event.key == pygame.K_LSHIFT:
+                    self.player.running = True
+                if event.key == pygame.K_LCTRL:
+                    self.player.dashing = True
+                    
+                # Combat
+                if event.key == pygame.K_j:
+                    self.player.light_attack()
+                if event.key == pygame.K_k:
+                    self.player.heavy_attack()
+                if event.key == pygame.K_l:
+                    self.player.block()
+                if event.key == pygame.K_i:
+                    self.player.use_ability(0)
+                if event.key == pygame.K_o:
+                    self.player.use_ability(1)
+                if event.key == pygame.K_u:
+                    self.player.use_ability(2)
+            
+            # Dungeon brawler movement
+            elif self.game_mode == "dungeon_brawler":
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    self.input_state['move_left'] = True
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    self.input_state['move_right'] = True
+                if event.key == pygame.K_SPACE:
+                    self.input_state['jump'] = True
+                if event.key == pygame.K_j:
+                    self.input_state['attack'] = True
+                if event.key == pygame.K_LCTRL:
+                    self.input_state['dash'] = True
+                if event.key == pygame.K_l:
+                    self.input_state['block'] = True
                 
     def _handle_keyup(self, event):
         """Handle key up events."""
         if self.state == "playing":
-            if event.key == pygame.K_w or event.key == pygame.K_UP:
-                self.player.moving_up = False
-            if event.key == pygame.K_s or event.key == pygame.K_DOWN:
-                self.player.moving_down = False
-            if event.key == pygame.K_a or event.key == pygame.K_LEFT:
-                self.player.moving_left = False
-            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
-                self.player.moving_right = False
-            if event.key == pygame.K_LSHIFT:
-                self.player.running = False
-            if event.key == pygame.K_LCTRL:
-                self.player.dashing = False
+            # Open world movement
+            if self.game_mode == "open_world":
+                if event.key == pygame.K_w or event.key == pygame.K_UP:
+                    self.player.moving_up = False
+                if event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                    self.player.moving_down = False
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    self.player.moving_left = False
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    self.player.moving_right = False
+                if event.key == pygame.K_LSHIFT:
+                    self.player.running = False
+                if event.key == pygame.K_LCTRL:
+                    self.player.dashing = False
+            
+            # Dungeon brawler movement
+            elif self.game_mode == "dungeon_brawler":
+                if event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                    self.input_state['move_left'] = False
+                if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                    self.input_state['move_right'] = False
+                if event.key == pygame.K_SPACE:
+                    self.input_state['jump'] = False
+                if event.key == pygame.K_j:
+                    self.input_state['attack'] = False
+                if event.key == pygame.K_LCTRL:
+                    self.input_state['dash'] = False
+                if event.key == pygame.K_l:
+                    self.input_state['block'] = False
                 
     def _handle_mouse_down(self, event):
         """Handle mouse down events."""
@@ -398,35 +514,80 @@ class Game:
             
     def _update_playing(self, dt):
         """Update game when playing."""
-        # Update player
-        self.player.update(dt)
+        # Check for dungeon entrance in open world mode
+        if self.game_mode == "open_world" and self.world:
+            self._check_dungeon_entrance()
         
-        # Update world
-        self.world.update(dt)
-        
-        # Update camera
-        self.camera.update(dt)
-        
-        # Update systems
-        self.collision_system.update(dt)
-        self.combat_system.update(dt)
-        self.particle_system.update(dt)
-        self.networking_system.update(dt)
-        
-        # Update HUD
-        self.hud.update(dt)
-        
-        # Update minimap
-        self.minimap.update(self.player, dt)
-        
-        # Check for game over
-        if self.player.health <= 0:
-            self.game_over()
+        # Update based on game mode
+        if self.game_mode == "open_world":
+            # Update player
+            self.player.update(dt)
             
-        # Check for victory (defeated final boss)
-        if hasattr(self.world, 'final_boss_defeated') and self.world.final_boss_defeated:
-            self.victory()
+            # Update world
+            self.world.update(dt)
             
+            # Update camera
+            self.camera.update(dt)
+            
+            # Update systems
+            self.collision_system.update(dt)
+            self.combat_system.update(dt)
+            self.particle_system.update(dt)
+            self.networking_system.update(dt)
+            
+            # Update HUD
+            self.hud.update(dt)
+            
+            # Update minimap
+            self.minimap.update(self.player, dt)
+            
+            # Check for game over
+            if self.player.health <= 0:
+                self.game_over()
+                
+            # Check for victory (defeated final boss)
+            if hasattr(self.world, 'final_boss_defeated') and self.world.final_boss_defeated:
+                self.victory()
+        
+        elif self.game_mode == "dungeon_brawler" and self.dungeon_brawler_mode:
+            # Update dungeon brawler mode
+            self.dungeon_brawler_mode.update(dt, self.input_state)
+            
+            # Check if dungeon is completed
+            if self.dungeon_brawler_mode.completed:
+                self.exit_dungeon_brawler()
+            
+            # Check for game over in dungeon mode
+            if self.dungeon_brawler_mode.player.health <= 0:
+                self.exit_dungeon_brawler()
+                self.game_over()
+            
+    def _check_dungeon_entrance(self):
+        """Check if player has entered a dungeon entrance."""
+        if not self.world or not self.player:
+            return
+        
+        # Check if player is near any dungeon entrance
+        player_rect = pygame.Rect(
+            self.player.x - self.player.width // 2,
+            self.player.y - self.player.height // 2,
+            self.player.width,
+            self.player.height
+        )
+        
+        # Check all dungeon entrances
+        for dungeon in self.world.dungeons:
+            entrance_rect = pygame.Rect(
+                dungeon.entrance_x - 30,
+                dungeon.entrance_y - 30,
+                60, 60
+            )
+            
+            if player_rect.colliderect(entrance_rect):
+                # Player has entered a dungeon
+                self.enter_dungeon_brawler(dungeon)
+                return
+    
     def _update_paused(self, dt):
         """Update game when paused."""
         if self.current_menu:
@@ -468,17 +629,23 @@ class Game:
         # Clear screen
         self.screen.fill(BLACK)
         
-        # Render world
-        self.rendering_system.render(self.screen)
+        # Render based on game mode
+        if self.game_mode == "open_world":
+            # Render world
+            self.rendering_system.render(self.screen)
+            
+            # Render particles
+            self.particle_system.render(self.screen)
+            
+            # Render HUD
+            self.hud.render(self.screen)
+            
+            # Render minimap
+            self.minimap.render(self.screen)
         
-        # Render particles
-        self.particle_system.render(self.screen)
-        
-        # Render HUD
-        self.hud.render(self.screen)
-        
-        # Render minimap
-        self.minimap.render(self.screen)
+        elif self.game_mode == "dungeon_brawler" and self.dungeon_brawler_mode:
+            # Render dungeon brawler mode
+            self.dungeon_brawler_mode.render(self.screen)
         
     def _render_paused(self):
         """Render game when paused."""
