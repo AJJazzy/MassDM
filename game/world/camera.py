@@ -55,9 +55,6 @@ class Camera:
         self.world_width = WORLD_WIDTH_PIXELS
         self.world_height = WORLD_HEIGHT_PIXELS
         
-        # Reference to game
-        self.game = game
-        
         # Viewport
         self.viewport_width = SCREEN_WIDTH
         self.viewport_height = SCREEN_HEIGHT

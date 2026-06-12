@@ -150,7 +150,7 @@ class World:
         if not hasattr(self.game, 'player'):
             return
         
-        player = self.game.player
+        player = self.player
         player_chunk_x = int(player.x / (CHUNK_SIZE * TILE_SIZE))
         player_chunk_y = int(player.y / (CHUNK_SIZE * TILE_SIZE))
         
@@ -178,7 +178,7 @@ class World:
         if not hasattr(self.game, 'player'):
             return False
         
-        player = self.game.player
+        player = self.player
         player_chunk_x = int(player.x / (CHUNK_SIZE * TILE_SIZE))
         player_chunk_y = int(player.y / (CHUNK_SIZE * TILE_SIZE))
         
@@ -356,10 +356,10 @@ class World:
             self.active_dungeon = self.dungeons[dungeon_index]
             
             # Teleport player to dungeon entrance
-            if hasattr(self.game, 'player'):
+            if self.player:
                 entrance_x, entrance_y = self.active_dungeon.get_entrance_position()
-                self.game.player.x = entrance_x - self.game.player.width // 2
-                self.game.player.y = entrance_y - self.game.player.height // 2
+                self.player.x = entrance_x - self.player.width // 2
+                self.player.y = entrance_y - self.player.height // 2
             
             return True
         return False
@@ -368,10 +368,10 @@ class World:
         """Exit the current dungeon."""
         if self.active_dungeon:
             # Teleport player to dungeon exit (which is in the overworld)
-            if hasattr(self.game, 'player'):
+            if self.player:
                 exit_x, exit_y = self.active_dungeon.get_exit_position()
-                self.game.player.x = exit_x - self.game.player.width // 2
-                self.game.player.y = exit_y - self.game.player.height // 2
+                self.player.x = exit_x - self.player.width // 2
+                self.player.y = exit_y - self.player.height // 2
             
             self.active_dungeon = None
             return True
